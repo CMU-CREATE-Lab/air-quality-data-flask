@@ -1,1 +1,1 @@
-# earthtime-air-quality-api-flask
+# air-quality-data-flask
