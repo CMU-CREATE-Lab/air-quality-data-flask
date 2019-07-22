@@ -11,21 +11,26 @@ import sys
 
 DEBUG = False
 
-# functions
+# HELPER FUNCTIONS
 
 def dbprint(s):
 	if DEBUG:
 		print(s)
 
-# get input from cmdline
-def get_input():
-    if(len(sys.argv) == 4):
-        return sys.argv[1:4]
-    else:
-        print("usage: python3 process_ramps.py <start_date> <end_date> <channel>")
-        print("ex: python3 process_ramps.py 2019-05-01 2019-05-31 PM025")
-        print("output: smell_reports_<channel>-sensors_<start_date>_<end_date>.geojson")
-        exit()
+# returns true if date1 to date2 is a valid date range in form of yy-mm-dd
+def is_valid_date_range(date1, date2):
+	try:
+		dt_to_epoch(date1)
+		dt_to_epoch(date2)
+	except ValueError:
+		return False
+	if (dt_to_epoch(date1) > dt_to_epoch(date2)):
+		return False
+	return True
+
+# returns true if we have a smell value scale for that channel
+def is_valid_channel(channel):
+	return channel=="PM025" or channel=="SO2"
 
 # get json data from url
 def request_url(url):
@@ -33,8 +38,7 @@ def request_url(url):
 	dbprint("requesting " + url)
 	resp = requests.get(url)
 	if resp.status_code != 200:
-		# raise ApiError('GET ' + url + ' {}'.format(resp.status_code))
-		print("error {}".format(resp.status_code))
+		raise Exception("(error {} from {})".format(resp.status_code, url))		
 		return None
 	return resp.json();
 
@@ -51,10 +55,8 @@ def get_smell_value(sensor_value, channel="PM025"):
 		exit()
 
 	if (sensor_value==None):
-		# print("no sensor value")
 		return 0
 	elif sensor_value < 0:
-		# print("bad sensor val="+str(sensor_value))
 		return 0
 	elif (sensor_value >= 0 and sensor_value <= scale[0]):
 		return 1
@@ -97,6 +99,8 @@ def dt_to_epoch(date):
 def epoch_to_est(epoch):
 	return datetime.datetime.fromtimestamp(epoch).strftime('%m/%d/%Y %H:%M:%S')
 	# return datetime.datetime.utcfromtimestamp(epoch).strftime('%m/%d/%Y %H:%M:%S')
+
+# MAIN PROCESSING FUNCTIONS
 
 # for one day, generate array of "features" for geojson
 # given sensor_data json, start_epoch for day, channel
@@ -141,8 +145,7 @@ def process_pm25_achd(start_date, end_date):
 			new_request = api_request[0:api_request.find("/channels")]
 		resp = requests.get(new_request)
 		if resp.status_code != 200:
-			print("error")
-			raise ApiError('error {}'.format(resp.status_code))
+			raise Exception('error {} getting latlong from {}'.format(resp.status_code, new_request))
 		return [resp.json()['data']['latitude'], resp.json()['data']['longitude']]
 
 	# find indexes of channels w keyword
@@ -242,7 +245,7 @@ def process_and_output(start_date, end_date, channel):
 		url = ROOT + channel + "_" + date + ".json"
 		sensor_data = request_url(url)
 		if (sensor_data == None):
-			print ("request failed or bad data from request")
+			raise Exception("bad data from request from " + url)
 			continue
 		day_features = process_day(sensor_data, dt_to_epoch(date), channel)
 		all_features += day_features
@@ -253,26 +256,4 @@ def process_and_output(start_date, end_date, channel):
 
 	geojson_out = {"type":"FeatureCollection", "features": all_features}
 
-	# filename = channel + "-sensors_" + start_date + "_" + end_date + "_all.geojson"
-	# print("writing to " + filename)
-	# with open(filename, 'w') as outfile:
-	# 	json.dump(geojson_out,outfile)
-
 	return str(geojson_out)
-
-# main function
-def main():
-	# parameters
-	# start_date = "2019-05-01"
-	# end_date = "2019-05-31"
-	# channel = "PM025"
-
-	inputs = get_input()
-	start_date = inputs[0]
-	end_date = inputs[1]
-	channel = inputs[2]
-
-	print(process_and_output(start_date, end_date, channel))
-
-# main()
-# print("done")
