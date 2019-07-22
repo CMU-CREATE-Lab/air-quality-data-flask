@@ -1,2 +1,4 @@
 env/
 uwsgi.log
+*.pyc
+__pycache__/*
