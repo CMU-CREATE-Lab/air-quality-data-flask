@@ -45,7 +45,7 @@ def api_sensor_data():
 @app.route('/smell_reports')
 def api_smell_reports():
 	# sample request: http://data.airquality.createlab.org/smell_reports?from=2019-04-01&to=2019-04-02
-	#"http://staging.api.smellpittsburgh.org/api/v2/smell_reports?format=geojson&city_ids=1&start_time=1556683200&end_time=1559361599&timezone_string=America%2FNew_York"
+	#"http://api.smellpittsburgh.org/api/v2/smell_reports?format=geojson&city_ids=1&start_time=1556683200&end_time=1559361599&timezone_string=America%2FNew_York"
 	if ('from' in request.args) and ('to' in request.args):
 		start = str(dt_to_epoch(request.args['from']))
 		end = str(dt_to_epoch(request.args['to']))
@@ -54,7 +54,7 @@ def api_smell_reports():
 			msg = {"status":400, "message":"Malformed Request, bad date range: " + request.url}
 			return error_resp(msg)
 
-		url_template = "http://staging.api.smellpittsburgh.org/api/v2/smell_reports?format=geojson&city_ids=1&start_time={}&end_time={}&timezone_string=America%2FNew_York"
+		url_template = "http://api.smellpittsburgh.org/api/v2/smell_reports?format=geojson&city_ids=1&start_time={}&end_time={}&timezone_string=America%2FNew_York"
 		url = url_template.format(start,end)
 
 		try:
