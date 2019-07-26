@@ -278,4 +278,4 @@ def process_all_and_output(start, end, channel):
 
 	geojson_out = {"type":"FeatureCollection", "features": all_features}
 
-	return str(geojson_out)
+	return geojson_out
