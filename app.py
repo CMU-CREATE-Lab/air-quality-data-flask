@@ -12,17 +12,19 @@ def error_resp(msg):
 
 @app.route('/')
 def api_root():
-	return "Hello\n"
+	sample1 = "http://data.airquality.createlab.org/smell_reports?from=1556683200&to=1559361599"
+	sample2 = "https://data.airquality.createlab.org/sensor_data?from=1556683200&to=1559361599&channel=PM025"
+	return "Sample requests :{}, {}".format(sample1, sample2)
 
 @app.route('/sensor_data')
 def api_sensor_data():
-	# sample request: https://data.airquality.createlab.org/sensor_data?from=2019-05-01&to=2019-05-02&channel=PM025
+	# sample request: https://data.airquality.createlab.org/sensor_data?from=1556683200&to=1559361599&channel=PM025
 	if ('from' in request.args) and ('to' in request.args) and ('channel' in request.args):
-		start_date = request.args['from']
-		end_date = request.args['to']
+		start = request.args['from']
+		end = request.args['to']
 		channel = request.args['channel']
 
-		if (not is_valid_date_range(start_date, end_date)):
+		if (not is_valid_date_range(start,end)):
 			msg = {"status":400, "message":"Malformed Request, bad date range: " + request.url}
 			return error_resp(msg)
 
@@ -31,12 +33,12 @@ def api_sensor_data():
 			return error_resp(msg)
 
 		try:
-			gjs = process_and_output(start_date, end_date, channel)
+			gjs = process_all_and_output(start, end, channel)
 			resp = jsonify(gjs)
 			resp.status_code = 200
 			return resp
 		except Exception as inst:
-			msg = {"status":400, "message":"Processing Error:" + request.url + ", " + inst.args[0]}
+			msg = {"status":400, "message":"Processing Error: " + request.url + ", " + inst.args[0]}
 			return error_resp(msg)
 	else:
 		msg = {"status":400, "message":"Malformed Request, missing arguments: " + request.url}
@@ -44,13 +46,12 @@ def api_sensor_data():
 
 @app.route('/smell_reports')
 def api_smell_reports():
-	# sample request: http://data.airquality.createlab.org/smell_reports?from=2019-04-01&to=2019-04-02
-	#"http://api.smellpittsburgh.org/api/v2/smell_reports?format=geojson&city_ids=1&start_time=1556683200&end_time=1559361599&timezone_string=America%2FNew_York"
+	# sample request: http://data.airquality.createlab.org/smell_reports?from=1556683200&to=1559361599
 	if ('from' in request.args) and ('to' in request.args):
-		start = str(dt_to_epoch(request.args['from']))
-		end = str(dt_to_epoch(request.args['to']))
+		start = request.args['from']
+		end = request.args['to']
 
-		if (not is_valid_date_range(request.args['from'], request.args['to'])):
+		if (not is_valid_date_range(start,end)):
 			msg = {"status":400, "message":"Malformed Request, bad date range: " + request.url}
 			return error_resp(msg)
 
@@ -63,7 +64,7 @@ def api_smell_reports():
 			resp.status_code = 200
 			return resp
 		except Exception as inst:
-			msg = {"status":400, "message":"Processing Error:" + request.url + ", " + inst.args[0]}
+			msg = {"status":400, "message":"Processing Error: " + request.url + ", " + inst.args[0]}
 			return error_resp(msg)
 	else:
 		msg = {"status":400, "message":"Malformed Request, missing arguments: " + request.url}

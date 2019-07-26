@@ -17,14 +17,20 @@ def dbprint(s):
 	if DEBUG:
 		print(s)
 
-# returns true if date1 to date2 is a valid date range in form of yy-mm-dd
+# returns true if date1 to date2(epoch times) is a valid date range
 def is_valid_date_range(date1, date2):
+	date1 = int(date1)
+	date2 = int(date2)
 	try:
-		dt_to_epoch(date1)
-		dt_to_epoch(date2)
+		epoch_to_est(date1)
+		epoch_to_est(date2)
 	except ValueError:
 		return False
-	if (dt_to_epoch(date1) > dt_to_epoch(date2)):
+
+	if (date1 > date2):
+		return False
+
+	if (date2 > int(datetime.datetime.now().timestamp())):
 		return False
 	return True
 
@@ -70,6 +76,7 @@ def get_smell_value(sensor_value, channel="PM025"):
 		return 5
 
 # make geojson feature
+# manually adding local time offset for clarity but maybe this should be changed in the future
 def make_feature(lat, lon, e0, e1, smell_val):
 	feature = {"type":"Feature",
 		"geometry" : {"type" : "Point", "coordinates" : [lon,lat]}, 
@@ -79,7 +86,8 @@ def make_feature(lat, lon, e0, e1, smell_val):
 	        "StartEpochTime": e0,
 	        "EndEpochTime": e1,
 	        "GlyphIndex": smell_val,
-	        "SmellValue": smell_val
+	        "SmellValue": smell_val,
+	        "DateTimeString": epoch_to_est(e0, "%m/%d/%Y %H:%M:%S") + " -04:00"
 	        }
 		}
 	return feature
@@ -92,18 +100,27 @@ def get_date_range(start_date, end_date):
 	return [date.strftime("%Y-%m-%d") for date in date_generated]
 
 # convert date (string) fromm YY-mm-dd EST to epoch time
-def dt_to_epoch(date):
-	return int(datetime.datetime.strptime(date, "%Y-%m-%d").timestamp())
+def dt_to_epoch(date, format="%Y-%m-%d"):
+	return int(datetime.datetime.strptime(date, format).timestamp())
 
-# epoch time to local time
-def epoch_to_est(epoch):
-	return datetime.datetime.fromtimestamp(epoch).strftime('%m/%d/%Y %H:%M:%S')
-	# return datetime.datetime.utcfromtimestamp(epoch).strftime('%m/%d/%Y %H:%M:%S')
+# convert epoch (int or string) to YY-mm-dd EST(default)
+def epoch_to_est(epoch, format="%Y-%m-%d"):
+	return datetime.datetime.fromtimestamp(int(epoch)).strftime(format)
+
+# epoch time to utc datetime
+def epoch_to_utc(epoch, format="%Y-%m-%d"):
+	return datetime.datetime.utcfromtimestamp(int(epoch)).strftime(format)
+
+# get local timezone offset, for info only
+def get_tz(epoch):
+	d = datetime.datetime.fromtimestamp (epoch) - datetime.datetime.utcfromtimestamp (epoch)
+	return (d.days*3600*24 - d.seconds) / 3600
 
 # MAIN PROCESSING FUNCTIONS
 
 # for one day, generate array of "features" for geojson
 # given sensor_data json, start_epoch for day, channel
+# (aggregates)
 def process_day(sensor_data, start_epoch, channel):
 	features = []
 	sums = [0,0,0,0,0,0]
@@ -233,10 +250,15 @@ def process_pm25_achd(start_date, end_date):
 			all_sensor_feats += sensor_feats
 
 	return all_sensor_feats
-	
-def process_and_output(start_date, end_date, channel):
-	date_range = get_date_range(start_date, end_date)
 
+# process aggregates
+# if channel is pm025, get extra sensors directly from esdr
+# inputs start and end are epoch times
+def process_all_and_output(start, end, channel):
+	start_date = epoch_to_est(start)
+	end_date = epoch_to_est(end)
+
+	date_range = get_date_range(start_date, end_date)
 	ROOT = "https://data2.createlab.org/esdr-aggregates/"
 
 	# for each day, get feature array, append to total 
