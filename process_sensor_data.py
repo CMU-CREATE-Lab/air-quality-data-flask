@@ -19,9 +19,9 @@ def dbprint(s):
 
 # returns true if date1 to date2(epoch times) is a valid date range
 def is_valid_date_range(date1, date2):
-	date1 = int(date1)
-	date2 = int(date2)
 	try:
+		date1 = int(date1)
+		date2 = int(date2)
 		epoch_to_est(date1)
 		epoch_to_est(date2)
 	except ValueError:
