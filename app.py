@@ -12,13 +12,13 @@ def error_resp(msg):
 
 @app.route('/')
 def api_root():
-	sample1 = "http://data.airquality.createlab.org/smell_reports?from=1556683200&to=1559361599"
-	sample2 = "https://data.airquality.createlab.org/sensor_data?from=1556683200&to=1559361599&channel=PM025"
+	sample1 = "http://airqualitydata.createlab.org/smell_reports?from=1556683200&to=1559361599"
+	sample2 = "https://airqualitydata.createlab.org/sensor_data?from=1556683200&to=1559361599&channel=PM025"
 	return "Sample requests :{}, {}".format(sample1, sample2)
 
 @app.route('/sensor_data')
 def api_sensor_data():
-	# sample request: https://data.airquality.createlab.org/sensor_data?from=1556683200&to=1559361599&channel=PM025
+	# sample request: https://airqualitydata.createlab.org/sensor_data?from=1556683200&to=1559361599&channel=PM025
 	if ('from' in request.args) and ('to' in request.args) and ('channel' in request.args):
 		start = request.args['from']
 		end = request.args['to']
@@ -46,7 +46,7 @@ def api_sensor_data():
 
 @app.route('/smell_reports')
 def api_smell_reports():
-	# sample request: http://data.airquality.createlab.org/smell_reports?from=1556683200&to=1559361599
+	# sample request: http://airqualitydata.createlab.org/smell_reports?from=1556683200&to=1559361599
 	if ('from' in request.args) and ('to' in request.args):
 		start = request.args['from']
 		end = request.args['to']
