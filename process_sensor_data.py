@@ -17,6 +17,13 @@ def dbprint(s):
 	if DEBUG:
 		print(s)
 
+# returns true if 90% of features are 0
+def is_empty(features):
+	dbprint("checking for empty data:")
+	filtered = list(filter(lambda x: x["properties"]["SmellValue"] > 0, features))
+	dbprint(len(filtered))
+	return len(filtered) == 0
+
 # returns true if date1 to date2(epoch times) is a valid date range
 def is_valid_date_range(date1, date2):
 	try:
