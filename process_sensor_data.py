@@ -177,7 +177,8 @@ def process_wind(start, end, channel):
 
 	features = []
 	for fid in feed_ids:
-		url = esdr_root + 'feeds/' + str(fid) + '/channels/' + channel + '/export?format=json'
+		url = esdr_root + 'feeds/' + str(fid) + '/channels/' + channel
+		url += '/export?format=json&from=' + str(start) + '&to=' + str(end)
 
 		dbprint("requesting lat long")
 		coord = get_latlong(url)
@@ -204,6 +205,6 @@ def process_wind(start, end, channel):
 			feature = make_feature(coord[0], coord[1], epoch0, epoch1, glyph_idx)
 			features.append(feature)
 
-	dbprint(features[0:10])
+	# dbprint(features[0:10])
 	geojson_out = {"type":"FeatureCollection", "features": features}
 	return geojson_out
