@@ -7,7 +7,7 @@ import json
 import datetime
 import sys
 
-DEBUG = True
+DEBUG = False
 
 def dbprint(s):
 	if DEBUG:
